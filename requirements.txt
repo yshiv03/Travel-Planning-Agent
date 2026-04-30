@@ -1,0 +1,26 @@
+# Travel Agent Final Project — pinned dependencies (April 2026)
+# These versions are tested to install together cleanly.
+# Use uv (recommended) or pip. See README.md for setup.
+
+# --- Core agent stack ---
+langchain-groq==0.3.8
+langgraph==0.6.11
+langchain-core==0.3.84
+langchain-community==0.3.31
+
+# --- Web search (Tavily) ---
+tavily-python==0.7.24
+
+# --- Data validation ---
+pydantic==2.11.10
+
+# --- Web UI ---
+streamlit==1.50.0
+
+# --- Environment vars ---
+python-dotenv==1.1.1
+
+# --- Optional: RAG support (uncomment if your project uses RAG) ---
+# chromadb==1.0.21
+# langchain-chroma==0.2.6
+# fastembed==0.7.3

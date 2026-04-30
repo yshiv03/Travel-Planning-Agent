@@ -1,0 +1,36 @@
+# Secrets
+.env
+.streamlit/secrets.toml
+
+# Virtualenv
+.venv/
+venv/
+env/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# uv
+.uv-cache/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Local data / vector stores
+*.db
+*.sqlite
+*.sqlite3
+chroma_db/
+data/index/
+
+# Notebook checkpoints
+.ipynb_checkpoints/

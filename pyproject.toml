@@ -1,0 +1,26 @@
+[project]
+name = "travel-agent-final-project"
+version = "0.1.0"
+description = "Final project starter — build your own travel agent with LangGraph, Groq, and Streamlit."
+readme = "README.md"
+requires-python = ">=3.10,<3.13"
+dependencies = [
+    "langchain-groq==0.3.8",
+    "langgraph==0.6.11",
+    "langchain-core==0.3.84",
+    "langchain-community==0.3.31",
+    "tavily-python==0.7.24",
+    "pydantic==2.11.10",
+    "streamlit==1.50.0",
+    "python-dotenv==1.1.1",
+]
+
+[project.optional-dependencies]
+rag = [
+    "chromadb==1.0.21",
+    "langchain-chroma==0.2.6",
+    "fastembed==0.7.3",
+]
+
+[tool.uv]
+package = false
