@@ -14,7 +14,14 @@ The state, the tools, and the prompt are decoupled — extend any of them
 without touching the others.
 """
 
+from pathlib import Path
 from typing import Annotated, TypedDict
+
+from dotenv import load_dotenv
+
+# `app.py` also loads `.env`; this covers REPL / `python -c` / tests that import
+# `build_agent` without running Streamlit first.
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 from langchain_core.messages import AnyMessage, SystemMessage
 from langchain_groq import ChatGroq

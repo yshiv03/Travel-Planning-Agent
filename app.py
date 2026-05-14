@@ -12,21 +12,31 @@ as you add features: sidebar for preferences, expander to show "agent thinking"
 
 import os
 import uuid
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+# Load project `.env` by path so keys work even when cwd is not the repo root
+# (e.g. `streamlit run /path/to/app.py` from another directory).
+_ROOT = Path(__file__).resolve().parent
+load_dotenv(_ROOT / ".env")
 
 import streamlit as st
-from dotenv import load_dotenv
 from langchain_core.messages import AIMessage, HumanMessage
+from streamlit.errors import StreamlitSecretNotFoundError
 
 from src.agent import build_agent
 
-# Load .env locally; on Streamlit Cloud, secrets come from st.secrets.
-load_dotenv()
-
 # Streamlit Cloud injects secrets into st.secrets — copy them to env vars so
 # the rest of the code (which reads os.environ) just works in both places.
-for key in ("GROQ_API_KEY", "TAVILY_API_KEY"):
-    if key in st.secrets and key not in os.environ:
-        os.environ[key] = st.secrets[key]
+# Locally, missing `.streamlit/secrets.toml` makes any `st.secrets` access raise;
+# `.env` already populated keys above.
+try:
+    for key in ("GROQ_API_KEY", "TAVILY_API_KEY"):
+        if key in st.secrets and key not in os.environ:
+            os.environ[key] = st.secrets[key]
+except StreamlitSecretNotFoundError:
+    pass
 
 
 # --- Page config -------------------------------------------------------------
@@ -38,7 +48,12 @@ st.caption("Plan a trip. I'll suggest a day-by-day itinerary with booking links.
 
 # --- Pre-flight: check for API keys ------------------------------------------
 
-missing = [k for k in ("GROQ_API_KEY", "TAVILY_API_KEY") if not os.environ.get(k)]
+def _env_nonempty(key: str) -> bool:
+    v = os.environ.get(key)
+    return bool(v and str(v).strip())
+
+
+missing = [k for k in ("GROQ_API_KEY", "TAVILY_API_KEY") if not _env_nonempty(k)]
 if missing:
     st.error(
         f"Missing API key(s): {', '.join(missing)}.\n\n"
