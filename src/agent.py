@@ -21,7 +21,7 @@ from dotenv import load_dotenv
 
 # `app.py` also loads `.env`; this covers REPL / `python -c` / tests that import
 # `build_agent` without running Streamlit first.
-load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+load_dotenv(Path(__file__).resolve().parent.parent / ".env", override=True)
 
 from langchain_core.messages import AnyMessage, SystemMessage
 from langchain_groq import ChatGroq

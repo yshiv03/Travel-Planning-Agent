@@ -16,10 +16,17 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
+
+def _env_nonempty(key: str) -> bool:
+    v = os.environ.get(key)
+    return bool(v and str(v).strip())
+
+
 # Load project `.env` by path so keys work even when cwd is not the repo root
 # (e.g. `streamlit run /path/to/app.py` from another directory).
 _ROOT = Path(__file__).resolve().parent
-load_dotenv(_ROOT / ".env")
+# `override=True` so placeholder/empty vars in the shell don't block real keys in `.env`.
+load_dotenv(_ROOT / ".env", override=True)
 
 import streamlit as st
 from langchain_core.messages import AIMessage, HumanMessage
@@ -33,8 +40,8 @@ from src.agent import build_agent
 # `.env` already populated keys above.
 try:
     for key in ("GROQ_API_KEY", "TAVILY_API_KEY"):
-        if key in st.secrets and key not in os.environ:
-            os.environ[key] = st.secrets[key]
+        if key in st.secrets and not _env_nonempty(key):
+            os.environ[key] = str(st.secrets[key]).strip()
 except StreamlitSecretNotFoundError:
     pass
 
@@ -43,15 +50,10 @@ except StreamlitSecretNotFoundError:
 
 st.set_page_config(page_title="Travel Agent", page_icon=None, layout="centered")
 st.title("Travel Agent")
-st.caption("Plan a trip. I'll suggest a day-by-day itinerary with booking links.")
+st.caption("Day-by-day itineraries with Booking.com and Google Flights links.")
 
 
 # --- Pre-flight: check for API keys ------------------------------------------
-
-def _env_nonempty(key: str) -> bool:
-    v = os.environ.get(key)
-    return bool(v and str(v).strip())
-
 
 missing = [k for k in ("GROQ_API_KEY", "TAVILY_API_KEY") if not _env_nonempty(k)]
 if missing:
@@ -83,6 +85,13 @@ if "thread_id" not in st.session_state:
 if "history" not in st.session_state:
     st.session_state.history = []  # list of (role, content) for display
 
+if not st.session_state.history:
+    st.info(
+        "Share **destination**, **dates**, **budget**, **interests**, and where "
+        "you're flying from. I'll ask for anything missing, then build a "
+        "morning / afternoon / evening plan you can refine in chat."
+    )
+
 
 # --- Render past messages ----------------------------------------------------
 
@@ -93,14 +102,19 @@ for role, content in st.session_state.history:
 
 # --- New user input ----------------------------------------------------------
 
-if prompt := st.chat_input("Where are you thinking of going?"):
+if prompt := st.chat_input(
+    "e.g. 3 days in Barcelona, May 15–18, $1500, food & architecture, flying from JFK"
+):
     st.session_state.history.append(("user", prompt))
     with st.chat_message("user"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
         with st.spinner("Planning..."):
-            config = {"configurable": {"thread_id": st.session_state.thread_id}}
+            config = {
+                "configurable": {"thread_id": st.session_state.thread_id},
+                "recursion_limit": 40,
+            }
             result = agent.invoke(
                 {"messages": [HumanMessage(content=prompt)]},
                 config=config,
@@ -123,8 +137,16 @@ with st.sidebar:
         st.rerun()
 
     st.divider()
+    st.subheader("Example prompt")
+    st.code(
+        "Plan a 3-day trip to Barcelona for 2 people, May 15–18 2026, "
+        "budget $1500, we like food and architecture, flying from JFK.",
+        language=None,
+    )
+    st.divider()
     st.subheader("About")
     st.markdown(
-        "This agent plans trips with booking links. It doesn't actually book "
-        "anything — click the links to book on the real sites."
+        "Plans trips with **Booking.com**, **Google Flights**, and **Maps** "
+        "links. Uses live web search for events and hours. Refine anytime "
+        "in this chat (e.g. *make day 2 less touristy*). Doesn't book for you."
     )
